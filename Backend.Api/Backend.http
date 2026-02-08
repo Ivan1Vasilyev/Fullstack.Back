@@ -1,0 +1,8 @@
+@Backend_HostAddress = http://localhost:5233
+
+GET {{Backend_HostAddress}}/api/cities
+Accept: application/json
+
+###
+GET {{Backend_HostAddress}}/api/pages
+Accept: application/json
