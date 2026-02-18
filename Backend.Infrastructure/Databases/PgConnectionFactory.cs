@@ -22,7 +22,7 @@ namespace Backend.Infrastructure.Databases
             }
         }
 
-        public async Task ExecuteNonQueryAsync(string sql, params object[] parameters)
+        public async Task ExecuteNonQueryAsync(string sql, params object?[] parameters)
         {
             using var conn = GetPgConnection();
             var comm = conn.CreateCommand();
@@ -32,7 +32,7 @@ namespace Backend.Infrastructure.Databases
             await comm.ExecuteNonQueryAsync();
         }
 
-        private void CreateParameters(NpgsqlCommand comm, params object[] parameters)
+        private void CreateParameters(NpgsqlCommand comm, params object?[] parameters)
         {
             if (parameters == null) return;
 
@@ -42,7 +42,7 @@ namespace Backend.Infrastructure.Databases
             }
         }
 
-        public async Task<T?> ExecuteScalarAsync<T>(string csName, string sql, params object[] parameters)
+        public async Task<T?> ExecuteScalarAsync<T>(string csName, string sql, params object?[] parameters)
         {
             using (var conn = GetPgConnection(_csStringsByName[csName]))
             {
@@ -60,7 +60,7 @@ namespace Backend.Infrastructure.Databases
         }
 
         // Не используем для объектов, Т - примитив
-        public async Task<T?> ExecuteScalarAsync<T>(string sql, params object[] parameters)
+        public async Task<T?> ExecuteScalarAsync<T>(string sql, params object?[] parameters)
         {
             using var conn = GetPgConnection();
             var comm = conn.CreateCommand();

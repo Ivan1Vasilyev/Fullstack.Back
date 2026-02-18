@@ -1,4 +1,4 @@
-﻿using Backend.Application.DTOs.Cities;
+﻿using Backend.Application.Contracts.Cities;
 
 namespace Backend.Application.Interfaces.Services
 {

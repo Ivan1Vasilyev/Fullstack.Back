@@ -10,15 +10,8 @@ namespace Backend.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetCities(int id)
         {
-            try
-            {
-                var cities = await citiesService.GetProviderCitiesAsync(id);
-                return Ok(cities);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Ошибка: {ex.Message}");
-            }
+            var cities = await citiesService.GetProviderCitiesAsync(id);
+            return Ok(cities);
         }
     }
 }

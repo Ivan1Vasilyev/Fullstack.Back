@@ -1,5 +1,4 @@
 ﻿using Backend.Application.Contracts.Provider;
-using Backend.Application.DTOs.Providers;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces.Repositories;
 using Backend.Application.Interfaces.Services;
@@ -46,14 +45,19 @@ namespace Backend.Application.Services
 
         public async Task<ProviderDto> UpdateAsync(UpdateProviderRequest request)
         {
+            var errorMessages = new List<string>();
+
             if (request.ProviderId < 1)
-                throw new ValidationException("id должен быть больше 0");
+                errorMessages.Add("id должен быть больше 0");
 
             var newCode = LoaderCodeGenerator.GetCode(request.NewName);
 
             if (string.IsNullOrWhiteSpace(newCode))
-                throw new ValidationException($"code не может быть пустым. Имя: {request.NewName}");
-            
+                errorMessages.Add($"code не может быть пустым. Имя: {request.NewName}");
+
+            if (errorMessages.Count > 0)
+                throw new ValidationException(errorMessages);
+
             try
             {
                 var updatedProvider = await providerRepository.UpdateAsync(request.ProviderId, request.NewName, newCode)

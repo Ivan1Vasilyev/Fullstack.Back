@@ -1,4 +1,4 @@
-﻿using Backend.Application.DTOs.Cities;
+﻿using Backend.Application.Contracts.Cities;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces.Repositories;
 using Backend.Application.Interfaces.Services;

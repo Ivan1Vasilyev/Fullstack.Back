@@ -32,14 +32,7 @@ namespace Backend.Infrastructure.Repositories
             {
                 using var reader = await comm.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
-                {
-                    var id = (int)reader[0];
-                    var createdProviderId = (int)reader[1];
-                    var createdDomainName = reader.GetString(3);
-                    var yandexKey = reader[4] as string;
-
-                    return new Site(id, createdProviderId, createdDomainName, yandexKey);
-                }
+                    return MapToSite(reader);
             }
             catch (PostgresException ex) when (ex.SqlState == "23503")
             {

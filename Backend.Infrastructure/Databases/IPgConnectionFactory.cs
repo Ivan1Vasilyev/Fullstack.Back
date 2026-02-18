@@ -6,8 +6,8 @@ namespace Backend.Infrastructure.Databases
     {
         NpgsqlConnection GetPgConnection();
         NpgsqlConnection GetPgConnection(string csString);
-        Task ExecuteNonQueryAsync(string sql, params object[] parameters);
-        Task<T?> ExecuteScalarAsync<T>(string csName, string sql, params object[] parameters);
-        Task<T?> ExecuteScalarAsync<T>(string sql, params object[] parameters);
+        Task ExecuteNonQueryAsync(string sql, params object?[] parameters);
+        Task<T?> ExecuteScalarAsync<T>(string csName, string sql, params object?[] parameters);
+        Task<T?> ExecuteScalarAsync<T>(string sql, params object?[] parameters);
     }
 }

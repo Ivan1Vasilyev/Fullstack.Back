@@ -1,5 +1,4 @@
 ﻿using Backend.Application.Contracts.Sites;
-using Backend.Application.DTOs.Sites;
 
 namespace Backend.Application.Interfaces.Services
 {

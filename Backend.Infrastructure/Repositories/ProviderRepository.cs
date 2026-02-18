@@ -50,7 +50,7 @@ namespace Backend.Infrastructure.Repositories
             if (await reader.ReadAsync())
                 return MapToProvider(reader);
 
-            throw new EntityNotFoundException("provider", id);
+            throw new EntityNotFoundException("provider", "id", id);
         }
 
         public async Task<Provider?> UpdateAsync(int id, string newName, string newCode)
@@ -81,7 +81,7 @@ namespace Backend.Infrastructure.Repositories
             }
             catch (PostgresException ex) when (ex.SqlState == "23505")
             {
-                throw new UniqueViolationException("code", newCode, "provider");
+                throw new UniqueViolationException("provider", "code", newCode);
             }
 
             return null;
@@ -91,7 +91,7 @@ namespace Backend.Infrastructure.Repositories
         {
             var exists = await ExistsByCodeAsync(code);
             if (exists)
-                throw new UniqueViolationException("code", code, "provider");
+                throw new UniqueViolationException("provider", "code", code);
 
             using var conn = pgConnectionFactory.GetPgConnection();
             var comm = conn.CreateCommand();

@@ -11,6 +11,7 @@ namespace Backend.Application
             services.AddSingleton<ICitiesService, CitiesService>();
             services.AddScoped<IProvidersService, ProvidersService>();
             services.AddScoped<ISitesService, SitesService>();
+            services.AddSingleton<IPagesService, PagesService>();
 
             return services;
         }

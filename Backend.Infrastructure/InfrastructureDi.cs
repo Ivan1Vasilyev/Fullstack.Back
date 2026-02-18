@@ -13,6 +13,7 @@ namespace Backend.Infrastructure
             services.AddSingleton<ICitiesRepository, CitiesRepository>();
             services.AddSingleton<IProvidersRepository, ProviderRepository>();
             services.AddSingleton<ISitesRepository, SitesRepository>();
+            services.AddSingleton<IPagesRepository, PagesRepository>();
 
             return services;
         }

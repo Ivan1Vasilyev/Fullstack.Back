@@ -1,5 +1,4 @@
 ﻿using Backend.Application.Contracts.Sites;
-using Backend.Application.DTOs.Sites;
 using Backend.Application.Exceptions;
 using Backend.Application.Interfaces.Repositories;
 using Backend.Application.Interfaces.Services;
@@ -14,13 +13,18 @@ namespace Backend.Application.Services
 
         public async Task<SiteDto> CreateAsync(CreateSiteRequest request)
         {
+            var errorMessages = new List<string>();
+
             var domain = request.DomainName;
             if (!IsValidDomainStrict(domain, out var errorMessage))
-                throw new ValidationException(errorMessage);
+                errorMessages.Add(errorMessage);
 
             var providerId = request.ProviderId;
             if (providerId < 1)
-                throw new ValidationException("Id провайдера должен быть больше 0");
+                errorMessages.Add("Id провайдера должен быть больше 0");
+
+            if (errorMessages.Count > 0)
+                throw new ValidationException(errorMessages);
 
             try
             {

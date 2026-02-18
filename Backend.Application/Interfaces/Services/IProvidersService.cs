@@ -1,5 +1,4 @@
 ﻿using Backend.Application.Contracts.Provider;
-using Backend.Application.DTOs.Providers;
 
 namespace Backend.Application.Interfaces.Services
 {
