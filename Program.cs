@@ -1,9 +1,13 @@
-using Backend.Services;
-using Backend.Repositories;
 using Backend.Databases;
+using Backend.FileLoaders;
 using Backend.Middleware;
+using Backend.Repositories;
+using Backend.Services;
+using Backend.Utils;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 #if DEBUG
 builder.Services.AddCors(options =>
@@ -23,7 +27,9 @@ builder.Services.AddControllers();
 builder.Services
     .AddServices()
     .AddRepositories()
-    .AddDatabases();
+    .AddDatabases()
+    .AddFileLoaders()
+    .AddUtils();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

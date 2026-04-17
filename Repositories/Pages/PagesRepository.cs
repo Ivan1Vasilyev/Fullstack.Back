@@ -18,7 +18,7 @@ namespace Backend.Repositories.Pages
                 var comm = connection.CreateCommand();
                 comm.CommandText = @$"
                     SELECT {_pageMapping}
-                    FROM page
+                    FROM content_page
                     WHERE parent_id IS NOT DISTINCT FROM @ParentId AND site_id = @SiteId
                 ";
 
@@ -42,7 +42,7 @@ namespace Backend.Repositories.Pages
             using var connection = pgConnectionFactory.GetPgConnection();
             var comm = connection.CreateCommand();
             comm.CommandText = $@"
-                UPDATE page SET 
+                UPDATE content_page SET 
                     page_name = @Name
                    ,page_type = @Type
                    ,page_content = @Content
@@ -73,7 +73,7 @@ namespace Backend.Repositories.Pages
             using var connection = pgConnectionFactory.GetPgConnection();
             var comm = connection.CreateCommand();
             comm.CommandText = @"
-                UPDATE page SET 
+                UPDATE content_page SET 
                     page_url = @Url
                 WHERE id = @Id
 
@@ -98,7 +98,7 @@ namespace Backend.Repositories.Pages
             using var connection = pgConnectionFactory.GetPgConnection();
             var comm = connection.CreateCommand();
             comm.CommandText = @$"
-                INSERT INTO page (
+                INSERT INTO content_page (
                      page_name
                     ,page_type
                     ,page_url
@@ -156,7 +156,7 @@ namespace Backend.Repositories.Pages
         {
             var sqlString = @"
                 SELECT EXISTS(
-                    SELECT 1 FROM page
+                    SELECT 1 FROM content_page
                     WHERE site_id = @p0
                         AND parent_id IS NOT DISTINCT FROM @p1
                         AND page_url = @p2

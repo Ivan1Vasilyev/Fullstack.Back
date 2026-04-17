@@ -16,7 +16,7 @@ namespace Backend.Repositories.Sites
             using var conn = pgConnectionFactory.GetPgConnection();
             var comm = conn.CreateCommand();
             comm.CommandText = @"
-                INSERT INTO site (provider_id, domain_name, yandex_counter_key)
+                INSERT INTO content_site (provider_id, domain_name, yandex_counter_key)
                 VALUES (@ProviderId, @DomainName, @YandexCounterKey)
 
                 RETURNING id, provider_id, domain_name, yandex_counter_key
@@ -51,7 +51,7 @@ namespace Backend.Repositories.Sites
                 var comm = connection.CreateCommand();
                 comm.CommandText = @"
                   SELECT id, provider_id, domain_name, yandex_counter_key
-                  FROM site
+                  FROM content_site
                   WHERE provider_id = @ProviderId
                   ORDER BY created_at 
                 ";
@@ -75,7 +75,7 @@ namespace Backend.Repositories.Sites
             using var conn = pgConnectionFactory.GetPgConnection();
             var comm = conn.CreateCommand();
             comm.CommandText = @"
-                UPDATE site
+                UPDATE content_site
                 SET domain_name = @DomainName, yandex_counter_key = @YandexCounterKey, modified_at = CURRENT_TIMESTAMP
                 WHERE id = @Id
                    AND (domain_name IS DISTINCT FROM @DomainName OR yandex_counter_key IS DISTINCT FROM @YandexCounterKey)
@@ -116,7 +116,7 @@ namespace Backend.Repositories.Sites
 
         private async Task<bool> ExistsByDomainAsync(string domainName)
         {
-            var sqlString = "SELECT EXISTS(SELECT 1 FROM site WHERE domain_name = @p0)";
+            var sqlString = "SELECT EXISTS(SELECT 1 FROM content_site WHERE domain_name = @p0)";
             return await pgConnectionFactory.ExecuteScalarAsync<bool>(sqlString, [domainName]);
         }
     }
