@@ -18,8 +18,8 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<IActionResult> LoadAsync(IFormFile file, [FromForm] FileLoaderOptions options)
         {
-            var res = await fileLoaderService.LoadAsync(file, options);
-            return Ok(res);
+            var result = await fileLoaderService.LoadAsync(file, options);
+            return Ok(result);
         }
     }
 }

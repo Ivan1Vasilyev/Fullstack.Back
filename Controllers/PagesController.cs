@@ -16,14 +16,14 @@ namespace Backend.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePage([FromBody] CreatePageRequest request)
+        public async Task<IActionResult> Create([FromBody] CreatePageRequest request)
         {
             var page = await pagesService.CreateAsync(request);
             return Ok(page);
         }
 
         [HttpPatch]
-        public async Task<IActionResult> UpdatePage([FromBody] UpdatePageRequest request)
+        public async Task<IActionResult> Update([FromBody] UpdatePageRequest request)
         {
             var page = await pagesService.UpdateAsync(request);
             return Ok(page);

@@ -4,7 +4,7 @@ namespace Backend.Databases.Postgres
 {
     public class PgConnectionFactory : IPgConnectionFactory
     {
-        private readonly string _cs;
+        private string _cs;
         private readonly Dictionary<string, string> _csStringsByName;
 
         public PgConnectionFactory(IConfiguration config)

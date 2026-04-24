@@ -7,7 +7,7 @@ namespace Backend.Databases
         public static IServiceCollection AddDatabases(this IServiceCollection services)
         {
             services.AddSingleton<IPgConnectionFactory, PgConnectionFactory>();
-
+            
             return services;
         }
     }

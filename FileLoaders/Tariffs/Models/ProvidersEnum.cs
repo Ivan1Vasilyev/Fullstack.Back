@@ -11,5 +11,4 @@
         public const string TELE2 = "Теле2";
         public const string MEGAFON = "Мегафон";
     }
-
 }

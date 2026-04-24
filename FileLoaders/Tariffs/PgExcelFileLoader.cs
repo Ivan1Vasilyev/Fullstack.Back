@@ -1,10 +1,8 @@
 ﻿using Backend.Databases.Postgres;
 using Backend.FileLoaders.Tariffs.Models;
-using Backend.Models.Context.Provider;
 using Backend.Utils.Excel;
 using ExcelDataReader;
 using Newtonsoft.Json;
-using Npgsql;
 using System.Data;
 using System.Text;
 
@@ -14,61 +12,6 @@ namespace Backend.FileLoaders.Tariffs
     {
         private readonly IPgConnectionFactory _connectionFactory = connectionFactory;
         private readonly IExcelHelper _excelHelper = excelHelper;
-
-        private const string _code = "code";
-        private const string _title = "title";
-        private const string _info = "info";
-        private const string _is_action = "is_action";
-        private const string _priority = "priority";
-        private const string _price = "price";
-        private const string _promo_price = "promo_price";
-        private const string _promo_price_length = "promo_price_length";
-        private const string _price_add_info = "price_add_info";
-        private const string _connection_price = "connection_price";
-        private const string _internet_speed = "internet_speed";
-        private const string _options = "options";
-        private const string _internet_technology = "internet_technology";
-        private const string _mob_minutes = "mob_minutes";
-        private const string _mob_sms = "mob_sms";
-        private const string _mob_gb = "mob_gb";
-        private const string _mob_info = "mob_info";
-        private const string _internet_wifi_router_in_complect = "internet_wifi_router_in_complect";
-        private const string _internet_wifi_router_buy_price = "internet_wifi_router_buy_price";
-        private const string _internet_wifi_router_arenda_price = "internet_wifi_router_arenda_price";
-        private const string _internet_wifi_router_rassrochka_price = "internet_wifi_router_rassrochka_price";
-        private const string _internet_wifi_router_rassrochka24_price = "internet_wifi_router_rassrochka24_price";
-        private const string _internet_wifi_router_rassrochka36_price = "internet_wifi_router_rassrochka36_price";
-        private const string _internet_wifi_router2_buy_price = "internet_wifi_router2_buy_price";
-        private const string _internet_wifi_router2_rassrochka_price = "internet_wifi_router2_rassrochka_price";
-        private const string _tv_channels = "tv_channels";
-        private const string _tv_hd_channels = "tv_hd_channels";
-        private const string _tv_uhd_channels = "tv_uhd_channels";
-        private const string _tv_interactive_channels = "tv_interactive_channels";
-        private const string _tv_pristavka_in_complect = "tv_pristavka_in_complect";
-        private const string _tv_pristavka_buy_price = "tv_pristavka_buy_price";
-        private const string _tv_pristavka_arenda_price = "tv_pristavka_arenda_price";
-        private const string _tv_pristavka_rassrochka_price = "tv_pristavka_rassrochka_price";
-        private const string _tv_pristavka_rassrochka24_price = "tv_pristavka_rassrochka24_price";
-        private const string _tv_pristavka_rassrochka36_price = "tv_pristavka_rassrochka36_price";
-        private const string _tv_pristavka2_rassrochka_price = "tv_pristavka2_rassrochka_price";
-        private const string _tv_pristavka2_rassrochka24_price = "tv_pristavka2_rassrochka24_price";
-        private const string _tv_pristavka2_rassrochka36_price = "tv_pristavka2_rassrochka36_price";
-        private const string _video_camera_in_complect = "video_camera_in_complect";
-        private const string _video_camera_buy_price = "video_camera_buy_price";
-        private const string _video_camera_arenda_price = "video_camera_arenda_price";
-        private const string _video_camera_rassrochka_price = "video_camera_rassrochka_price";
-        private const string _city = "city";
-        private const string _region = "region";
-        private const string _service = "service";
-        private const string _service_price = "price";
-
-        private const string _city_name = "city_name";
-        private const string _domain_code = "domain_code";
-        private const string _region_code = "region_code";
-        private const string _city_code = "city_code";
-        private const string _source_city_id = "source_city_id";
-        private const string _city_type = "city_type";
-        private const string _tag = "tag";
 
         public abstract string LoaderName { get; }
         public abstract string TargetCode { get; }
@@ -313,135 +256,137 @@ namespace Backend.FileLoaders.Tariffs
         }
         #endregion
 
-        private async Task SaveTarrifsAsync(IEnumerable<LoaderTariff> tariffs, int? providerId)
+        private async Task SaveTarrifsAsync(IEnumerable<LoaderTariff> tariffs, int providerId)
         {
-            using (var conn = _connectionFactory.GetPgConnection())
+            using var conn = _connectionFactory.GetPgConnection();
+            await conn.OpenAsync();
+
+            using var transaction = conn.BeginTransaction();
+
+            try
             {
-                await conn.OpenAsync();
-
-                using var transaction = conn.BeginTransaction();
-
                 var comm = conn.CreateCommand();
                 comm.Transaction = transaction;
 
                 comm.CommandText = @$"
-                CREATE TEMP TABLE tariff_temp (
-	                 {_code} character varying(256) NOT NULL
-                    ,{_title} character varying(64) NOT NULL
-                    ,{_info} text
-                    ,{_is_action} boolean NOT NULL
-                    ,{_priority} integer NOT NULL
-                    ,{_options} text
+                    CREATE TEMP TABLE tariff_temp (
+	                     code character varying(256) NOT NULL
+                        ,title character varying(64) NOT NULL
+                        ,info text
+                        ,is_action boolean NOT NULL
+                        ,priority integer NOT NULL
+                        ,options text
 
-                    ,{_price} integer NOT NULL
-                    ,{_promo_price} integer
-                    ,{_promo_price_length} integer
-                    ,{_price_add_info} text
-                    ,{_connection_price} integer
+                        ,price integer NOT NULL
+                        ,promo_price integer
+                        ,promo_price_length integer
+                        ,price_add_info text
+                        ,connection_price integer
 
-                    ,{_mob_minutes} integer
-                    ,{_mob_sms} integer
-                    ,{_mob_gb} integer
-                    ,{_mob_info} text
+                        ,mob_minutes integer
+                        ,mob_sms integer
+                        ,mob_gb integer
+                        ,mob_info text
 
-                    ,{_internet_speed} integer
-                    ,{_internet_technology} integer
-                    ,{_internet_wifi_router_in_complect} boolean
-                    ,{_internet_wifi_router_buy_price} integer
-                    ,{_internet_wifi_router_arenda_price} integer
-                    ,{_internet_wifi_router_rassrochka_price} integer
-                    ,{_internet_wifi_router_rassrochka24_price} integer
-                    ,{_internet_wifi_router_rassrochka36_price} integer
-                    ,{_internet_wifi_router2_buy_price} integer
-                    ,{_internet_wifi_router2_rassrochka_price} integer
+                        ,internet_speed integer
+                        ,internet_technology integer
+                        ,internet_wifi_router_in_complect boolean
+                        ,internet_wifi_router_buy_price integer
+                        ,internet_wifi_router_arenda_price integer
+                        ,internet_wifi_router_rassrochka_price integer
+                        ,internet_wifi_router_rassrochka24_price integer
+                        ,internet_wifi_router_rassrochka36_price integer
+                        ,internet_wifi_router2_buy_price integer
+                        ,internet_wifi_router2_rassrochka_price integer
 
-                    ,{_tv_channels} integer
-                    ,{_tv_hd_channels} integer
-                    ,{_tv_uhd_channels} integer
-                    ,{_tv_interactive_channels} integer
-                    ,{_tv_pristavka_in_complect} boolean
-                    ,{_tv_pristavka_buy_price} integer
-                    ,{_tv_pristavka_arenda_price} integer
-                    ,{_tv_pristavka_rassrochka_price} integer
-                    ,{_tv_pristavka_rassrochka24_price} integer
-                    ,{_tv_pristavka_rassrochka36_price} integer
-                    ,{_tv_pristavka2_rassrochka_price} integer
-                    ,{_tv_pristavka2_rassrochka24_price} integer
-                    ,{_tv_pristavka2_rassrochka36_price} integer
+                        ,tv_channels integer
+                        ,tv_hd_channels integer
+                        ,tv_uhd_channels integer
+                        ,tv_interactive_channels integer
+                        ,tv_pristavka_in_complect boolean
+                        ,tv_pristavka_buy_price integer
+                        ,tv_pristavka_arenda_price integer
+                        ,tv_pristavka_rassrochka_price integer
+                        ,tv_pristavka_rassrochka24_price integer
+                        ,tv_pristavka_rassrochka36_price integer
+                        ,tv_pristavka2_rassrochka_price integer
+                        ,tv_pristavka2_rassrochka24_price integer
+                        ,tv_pristavka2_rassrochka36_price integer
 
-                    ,{_video_camera_in_complect} boolean
-                    ,{_video_camera_buy_price} integer
-                    ,{_video_camera_arenda_price} integer
-                    ,{_video_camera_rassrochka_price} integer
-                )  ON COMMIT DROP;
+                        ,video_camera_in_complect boolean
+                        ,video_camera_buy_price integer
+                        ,video_camera_arenda_price integer
+                        ,video_camera_rassrochka_price integer
+                    );
 
-                CREATE TEMP TABLE tariff2city_temp (
-                     {_code} character varying(256) NOT NULL
-                    ,{_city} character varying(64) NOT NULL
-                    ,{_region} character varying(64) NOT NULL
-                ) ON COMMIT DROP;
+                    CREATE TEMP TABLE tariff2city_temp (
+                         code character varying(256) NOT NULL
+                        ,city character varying(64) NOT NULL
+                        ,region character varying(64) NOT NULL
+                    );
 
-                CREATE TEMP TABLE tariff_service_temp (
-                     {_code} character varying(256) NOT NULL
-                    ,{_service} text NOT NULL
-	                ,{_service_price} integer NULL
-                ) ON COMMIT DROP;
+                    CREATE TEMP TABLE tariff_service_temp (
+                         code character varying(256) NOT NULL
+                        ,service text NOT NULL
+	                    ,price integer NULL
+                    );
 
-                CREATE INDEX ix_tariff_service ON tariff_service_temp(code);
+                    CREATE INDEX ix_tariff_service ON tariff_service_temp(code);
                 ";
 
                 await comm.ExecuteNonQueryAsync();
 
                 var copyTariffs = @$"
                     COPY tariff_temp (
-                         {_code}
-                        ,{_title}
-                        ,{_info}
-                        ,{_is_action}
-                        ,{_priority}
-                        ,{_options}
+                         code
+                        ,title
+                        ,info
+                        ,is_action
+                        ,priority
+                        ,options
 
-                        ,{_price}
-                        ,{_promo_price}
-                        ,{_promo_price_length}
-                        ,{_price_add_info}
-                        ,{_connection_price}
+                        ,price
+                        ,promo_price
+                        ,promo_price_length
+                        ,price_add_info
+                        ,connection_price
 
-                        ,{_mob_minutes}
-                        ,{_mob_sms}
-                        ,{_mob_gb}
-                        ,{_mob_info}
+                        ,mob_minutes
+                        ,mob_sms
+                        ,mob_gb
+                        ,mob_info
 
-                        ,{_internet_speed}
-                        ,{_internet_technology}
-                        ,{_internet_wifi_router_in_complect}
-                        ,{_internet_wifi_router_buy_price}
-                        ,{_internet_wifi_router_arenda_price}
-                        ,{_internet_wifi_router_rassrochka_price}
-                        ,{_internet_wifi_router_rassrochka24_price}
-                        ,{_internet_wifi_router_rassrochka36_price}
-                        ,{_internet_wifi_router2_buy_price}
-                        ,{_internet_wifi_router2_rassrochka_price}
+                        ,internet_speed
+                        ,internet_technology
+                        ,internet_wifi_router_in_complect
+                        ,internet_wifi_router_buy_price
+                        ,internet_wifi_router_arenda_price
+                        ,internet_wifi_router_rassrochka_price
+                        ,internet_wifi_router_rassrochka24_price
+                        ,internet_wifi_router_rassrochka36_price
+                        ,internet_wifi_router2_buy_price
+                        ,internet_wifi_router2_rassrochka_price
 
-                        ,{_tv_channels}
-                        ,{_tv_hd_channels}
-                        ,{_tv_uhd_channels}
-                        ,{_tv_interactive_channels}
-                        ,{_tv_pristavka_in_complect}
-                        ,{_tv_pristavka_buy_price}
-                        ,{_tv_pristavka_arenda_price}
-                        ,{_tv_pristavka_rassrochka_price}
-                        ,{_tv_pristavka_rassrochka24_price}
-                        ,{_tv_pristavka_rassrochka36_price}
-                        ,{_tv_pristavka2_rassrochka_price}
-                        ,{_tv_pristavka2_rassrochka24_price}
-                        ,{_tv_pristavka2_rassrochka36_price}
+                        ,tv_channels
+                        ,tv_hd_channels
+                        ,tv_uhd_channels
+                        ,tv_interactive_channels
+                        ,tv_pristavka_in_complect
+                        ,tv_pristavka_buy_price
+                        ,tv_pristavka_arenda_price
+                        ,tv_pristavka_rassrochka_price
+                        ,tv_pristavka_rassrochka24_price
+                        ,tv_pristavka_rassrochka36_price
+                        ,tv_pristavka2_rassrochka_price
+                        ,tv_pristavka2_rassrochka24_price
+                        ,tv_pristavka2_rassrochka36_price
 
-                        ,{_video_camera_in_complect}
-                        ,{_video_camera_buy_price}
-                        ,{_video_camera_arenda_price}
-                        ,{_video_camera_rassrochka_price}
-                    ) FROM STDIN (FORMAT BINARY)";
+                        ,video_camera_in_complect
+                        ,video_camera_buy_price
+                        ,video_camera_arenda_price
+                        ,video_camera_rassrochka_price
+                    ) FROM STDIN (FORMAT BINARY)
+                ";
 
                 using (var writer = conn.BeginBinaryImport(copyTariffs))
                 {
@@ -507,9 +452,9 @@ namespace Backend.FileLoaders.Tariffs
 
                 var copyTariff2City = $@"
                     COPY tariff2city_temp (
-                         {_code}
-                        ,{_city}
-	                    ,{_region}
+                         code
+                        ,city
+	                    ,region
                     ) FROM STDIN (FORMAT BINARY)
                 ";
 
@@ -528,9 +473,9 @@ namespace Backend.FileLoaders.Tariffs
 
                 var copyServices = @$"
                     COPY tariff_service_temp (
-                         {_code} 
-                        ,{_service}
-	                    ,{_service_price}
+                         code
+                        ,service
+	                    ,price
                     ) FROM STDIN (FORMAT BINARY)
                 ";
 
@@ -550,292 +495,297 @@ namespace Backend.FileLoaders.Tariffs
                     writer.Complete();
                 }
 
-                comm.CommandText = @$"
-                    DO $$
-                    DECLARE 
-                        ProviderId integer := {providerId};
-                        TargetCode character varying(16) := '{TargetCode}';
-
-                    BEGIN
-
-                    UPDATE provider_tariff SET is_archive=true WHERE provider_id = ProviderId AND target_code = TargetCode;
+                comm.CommandText = @"
+                    UPDATE provider_tariff SET is_archive=true WHERE provider_id = @ProviderId AND target_code = @TargetCode;
 
                     INSERT INTO provider_tariff (
                          target_code
                         ,provider_id
-                        ,{_code}
-                        ,{_title}
-                        ,{_info}
-                        ,{_is_action}
-                        ,{_priority}
-                        ,{_options}
+                        ,code
+                        ,title
+                        ,info
+                        ,is_action
+                        ,priority
+                        ,options
 
-                        ,{_price}
-                        ,{_promo_price}
-                        ,{_promo_price_length}
-                        ,{_price_add_info}
-                        ,{_connection_price}
+                        ,price
+                        ,promo_price
+                        ,promo_price_length
+                        ,price_add_info
+                        ,connection_price
 
-                        ,{_mob_minutes}
-                        ,{_mob_sms}
-                        ,{_mob_gb}
-                        ,{_mob_info}
+                        ,mob_minutes
+                        ,mob_sms
+                        ,mob_gb
+                        ,mob_info
 
-                        ,{_internet_speed}
-                        ,{_internet_technology}
-                        ,{_internet_wifi_router_in_complect}
-                        ,{_internet_wifi_router_buy_price}
-                        ,{_internet_wifi_router_arenda_price}
-                        ,{_internet_wifi_router_rassrochka_price}
-                        ,{_internet_wifi_router_rassrochka24_price}
-                        ,{_internet_wifi_router_rassrochka36_price}
-                        ,{_internet_wifi_router2_buy_price}
-                        ,{_internet_wifi_router2_rassrochka_price}
+                        ,internet_speed
+                        ,internet_technology
+                        ,internet_wifi_router_in_complect
+                        ,internet_wifi_router_buy_price
+                        ,internet_wifi_router_arenda_price
+                        ,internet_wifi_router_rassrochka_price
+                        ,internet_wifi_router_rassrochka24_price
+                        ,internet_wifi_router_rassrochka36_price
+                        ,internet_wifi_router2_buy_price
+                        ,internet_wifi_router2_rassrochka_price
 
-                        ,{_tv_channels}
-                        ,{_tv_hd_channels}
-                        ,{_tv_uhd_channels}
-                        ,{_tv_interactive_channels}
-                        ,{_tv_pristavka_in_complect}
-                        ,{_tv_pristavka_buy_price}
-                        ,{_tv_pristavka_arenda_price}
-                        ,{_tv_pristavka_rassrochka_price}
-                        ,{_tv_pristavka_rassrochka24_price}
-                        ,{_tv_pristavka_rassrochka36_price}
-                        ,{_tv_pristavka2_rassrochka_price}
-                        ,{_tv_pristavka2_rassrochka24_price}
-                        ,{_tv_pristavka2_rassrochka36_price}
+                        ,tv_channels
+                        ,tv_hd_channels
+                        ,tv_uhd_channels
+                        ,tv_interactive_channels
+                        ,tv_pristavka_in_complect
+                        ,tv_pristavka_buy_price
+                        ,tv_pristavka_arenda_price
+                        ,tv_pristavka_rassrochka_price
+                        ,tv_pristavka_rassrochka24_price
+                        ,tv_pristavka_rassrochka36_price
+                        ,tv_pristavka2_rassrochka_price
+                        ,tv_pristavka2_rassrochka24_price
+                        ,tv_pristavka2_rassrochka36_price
 
-                        ,{_video_camera_in_complect}
-                        ,{_video_camera_buy_price}
-                        ,{_video_camera_arenda_price}
-                        ,{_video_camera_rassrochka_price}
+                        ,video_camera_in_complect
+                        ,video_camera_buy_price
+                        ,video_camera_arenda_price
+                        ,video_camera_rassrochka_price
                     )
-                    SELECT TargetCode, ProviderId, * FROM tariff_temp;
+                    SELECT @TargetCode, @ProviderId, * FROM tariff_temp;
                     
                     INSERT INTO provider_tariff_to_city (tariff_id, city_id, provider_id)
-                    SELECT DISTINCT pt.id, pc.id, ProviderId
+                    SELECT DISTINCT pt.id, pc.id, @ProviderId
                     FROM tariff2city_temp tc
-                    INNER JOIN provider_region pr ON pr.region_name = tc.region AND pr.provider_id = ProviderId
-                    INNER JOIN provider_city pc ON pc.city_name = tc.city AND pc.provider_id = ProviderId
-                    INNER JOIN provider_tariff pt ON pt.code = tc.code AND pt.provider_id = ProviderId;
+                    INNER JOIN provider_region pr ON pr.region_name = tc.region AND pr.provider_id = @ProviderId
+                    INNER JOIN provider_city pc ON pc.city_name = tc.city AND pc.provider_id = @ProviderId
+                    INNER JOIN provider_tariff pt ON pt.code = tc.code AND pt.provider_id = @ProviderId;
 
                     INSERT INTO provider_tariff_service(provider_tariff_id, service, price)
                     SELECT t.id, ts.service, ts.price
                     FROM tariff_service_temp ts
-                    INNER JOIN provider_tariff t ON t.provider_id = ProviderId AND t.target_code = TargetCode AND t.code = ts.code;
-
-                    END $$;
+                    INNER JOIN provider_tariff t ON t.provider_id = @ProviderId AND t.target_code = @TargetCode AND t.code = ts.code;
                 ";
 
+                comm.Parameters.AddWithValue("@ProviderId", providerId);
+                comm.Parameters.AddWithValue("@TargetCode", TargetCode);
+
+
                 await comm.ExecuteNonQueryAsync();
+
                 await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
-        private async Task<int?> GetProviderByName(string name)
+        private async Task<int> GetProviderByName(string name)
         {
             var result = await _connectionFactory.ExecuteScalarAsync<int>("SELECT id FROM provider WHERE name = @p0 LIMIT 1;", [name]);
+            if (result == 0) throw new Exception($"provider with name {name} not found in DB");
             return result;
         }
 
-        private async Task SaveCitiesAsync(IEnumerable<LoaderCity> cities, int? providerId)
+        private async Task SaveCitiesAsync(IEnumerable<LoaderCity> cities, int providerId)
         {
             using var conn = _connectionFactory.GetPgConnection();
             await conn.OpenAsync();
 
             using var transaction = conn.BeginTransaction();
-            var comm = conn.CreateCommand();
-
-            comm.Transaction = transaction;
-            comm.CommandText = @$"
-                CREATE TEMP TABLE cities_temp (
-                     {_city_name} character varying(256) NOT NULL
-                    ,{_region} character varying(256) NOT NULL
-	                ,{_city_code} character varying(256) NOT NULL
-                    ,{_region_code} character varying(256) NOT NULL
-	                ,{_domain_code} character varying(256) NOT NULL
-	                ,{_source_city_id} integer
-	                ,{_city_type} character varying(64)
-                ) ON COMMIT DROP;
-
-
-                CREATE TEMP TABLE tags_temp (
-                     {_city_name} character varying(256)
-                    ,{_tag} character varying(256)
-                    ,{_region} character varying(256)
-                ) ON COMMIT DROP;
-            ";
-
-            await comm.ExecuteNonQueryAsync();
-
-            var copyCity = $@"
-                COPY cities_temp (
-                     {_city_name}
-                    ,{_region}
-	                ,{_city_code}
-                    ,{_region_code}
-	                ,{_domain_code}
-	                ,{_source_city_id}
-	                ,{_city_type}
-                ) FROM STDIN (FORMAT BINARY)
-            ";
-
-            using (var writer = conn.BeginBinaryImport(copyCity))
+            try
             {
-                foreach (var city in cities.Select(x => new { x.Name, x.Region, x.Code, x.RegionCode, x.CityCode, x.SourceCityId, x.CityType }).Distinct().OrderBy(x => x.Code.Length))
+                var comm = conn.CreateCommand();
+
+                comm.Transaction = transaction;
+                comm.CommandText = @"
+                    CREATE TEMP TABLE cities_temp (
+                         city_name character varying(256) NOT NULL
+                        ,region character varying(256) NOT NULL
+	                    ,city_code character varying(256) NOT NULL
+                        ,region_code character varying(256) NOT NULL
+	                    ,domain_code character varying(256) NOT NULL
+	                    ,source_city_id integer
+	                    ,city_type character varying(64)
+                    );
+
+                    CREATE TEMP TABLE tags_temp (
+                         city_name character varying(256)
+                        ,tag character varying(256)
+                        ,region character varying(256)
+                    );
+                ";
+
+                await comm.ExecuteNonQueryAsync();
+
+                var copyCity = @"
+                    COPY cities_temp (
+                         city_name
+                        ,region
+	                    ,city_code
+                        ,region_code
+	                    ,domain_code
+	                    ,source_city_id
+	                    ,city_type
+                    ) FROM STDIN (FORMAT BINARY)
+                ";
+
+                using (var writer = conn.BeginBinaryImport(copyCity))
                 {
-                    writer.StartRow();
-                    writer.Write(city.Name, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(city.Region, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(city.Code, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(city.RegionCode, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(city.CityCode, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(city.SourceCityId, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(city.CityType, NpgsqlTypes.NpgsqlDbType.Varchar);
+                    foreach (var city in cities.Select(x => new { x.Name, x.Region, x.Code, x.RegionCode, x.CityCode, x.SourceCityId, x.CityType }).Distinct().OrderBy(x => x.Code.Length))
+                    {
+                        writer.StartRow();
+                        writer.Write(city.Name, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(city.Region, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(city.Code, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(city.RegionCode, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(city.CityCode, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(city.SourceCityId, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(city.CityType, NpgsqlTypes.NpgsqlDbType.Varchar);
+                    }
+
+                    writer.Complete();
                 }
 
-                writer.Complete();
-            }
+                var copyTags = @"
+                    COPY tags_temp (
+                         city_name
+	                    ,tag
+                        ,region
+                    ) FROM STDIN (FORMAT BINARY)
+                ";
 
-            var copyTags = $@"
-                COPY tags_temp (
-                     {_city_name}
-	                ,{_tag}
-                    ,{_region}
-                ) FROM STDIN (FORMAT BINARY)
-            ";
-
-            using (var writer = conn.BeginBinaryImport(copyTags))
-            {
-                foreach (var tag in cities.SelectMany(x => x.Tags.Select(y => new { City = x.Name, Tag = y, x.Region })).Distinct())
+                using (var writer = conn.BeginBinaryImport(copyTags))
                 {
-                    writer.StartRow();
-                    writer.Write(tag.City, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(tag.Tag, NpgsqlTypes.NpgsqlDbType.Varchar);
-                    writer.Write(tag.Region, NpgsqlTypes.NpgsqlDbType.Varchar);
+                    foreach (var tag in cities.SelectMany(x => x.Tags.Select(y => new { City = x.Name, Tag = y, x.Region })).Distinct())
+                    {
+                        writer.StartRow();
+                        writer.Write(tag.City, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(tag.Tag, NpgsqlTypes.NpgsqlDbType.Varchar);
+                        writer.Write(tag.Region, NpgsqlTypes.NpgsqlDbType.Varchar);
+                    }
+
+                    writer.Complete();
                 }
 
-                writer.Complete();
-            }
-
-            comm.CommandText = $@"
-                DO $$
-                DECLARE 
-                    ProviderId integer := {providerId};
-                BEGIN
-                
-                INSERT INTO provider_region (region_name, region_code, provider_id)
-                SELECT DISTINCT 
-                     src.region
-                    ,src.region_code
-                    ,ProviderId
-                FROM cities_temp src
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM provider_region tgt 
-                    WHERE tgt.region_name = src.region 
-                    AND tgt.provider_id = ProviderId
-                );                
-                
-                INSERT INTO provider_city (city_name, provider_id, region_id, domain_code, city_code, source_city_id, city_type)
-                SELECT DISTINCT
-                     src.city_name AS name
-                    ,ProviderId
-                    ,r.id AS region_id
-                    ,src.domain_code
-                    ,src.city_code
-                    ,src.source_city_id
-                    ,src.city_type
-                FROM cities_temp src
-                CROSS JOIN LATERAL (
-                    SELECT id FROM provider_region 
-                    WHERE region_name = src.region 
-                    AND provider_id = ProviderId 
-                    LIMIT 1
-                ) r
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM provider_city tgt 
-                    WHERE tgt.city_name = src.city_name 
-                    AND tgt.provider_id = ProviderId 
-                    AND tgt.region_id = r.id
-                    AND (src.city_type = tgt.city_type OR src.city_type IS NULL)
-                );
-                
-                INSERT INTO provider_tag (name, provider_id)
-                SELECT DISTINCT
-                    tag
-                    ,ProviderId
-                FROM tags_temp
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM provider_tag tgt 
-                    WHERE tgt.name = tag 
-                    AND tgt.provider_id = ProviderId
-                );
-                
-                CREATE TEMP TABLE city_to_tag_temp AS
-                SELECT DISTINCT
-                    c.id AS city_id,
-                    rt.id AS tag_id
-                FROM tags_temp t
-                CROSS JOIN LATERAL (
-                    SELECT id FROM provider_city c
-                    WHERE c.city_name = t.city_name
-                    AND c.provider_id = ProviderId
-                    AND EXISTS (
-                        SELECT 1 FROM provider_region r 
-                        WHERE r.region_name = t.region 
-                        AND r.id = c.region_id
-                    )
-                    LIMIT 1
-                ) c
-                CROSS JOIN LATERAL (
-                    SELECT id FROM provider_tag 
-                    WHERE name = t.tag 
-                    AND provider_id = ProviderId
-                    LIMIT 1
-                ) rt;
-                
-                INSERT INTO provider_city_to_tag (provider_id, provider_city_id, provider_tag_id)
-                SELECT 
-                     ProviderId
-                    ,city_id
-                    ,tag_id
-                FROM city_to_tag_temp src
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM provider_city_to_tag tgt 
-                    WHERE tgt.provider_city_id = src.city_id 
-                    AND tgt.provider_tag_id = src.tag_id
-                );
-                
-                -- Обновление DomainCode
-                UPDATE provider_city
-                SET domain_code = city_code
-                WHERE id IN (
-                    SELECT DISTINCT pc.id
-                    FROM provider_city pc
-                    JOIN (
-                        SELECT pc2.domain_code, MIN(pc2.id) AS min_id
-                        FROM provider_city pc2
-                        WHERE pc2.provider_id = ProviderId
-                        AND pc2.domain_code IN (
-                            SELECT domain_code
-                            FROM provider_city
-                            WHERE provider_id = ProviderId
-                            GROUP BY domain_code
-                            HAVING COUNT(*) > 1
+                comm.CommandText = @"
+                    INSERT INTO provider_region (region_name, region_code, provider_id)
+                    SELECT DISTINCT
+                         src.region
+                        ,src.region_code
+                        ,@ProviderId
+                    FROM cities_temp src
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM provider_region tgt
+                        WHERE tgt.region_name = src.region
+                        AND tgt.provider_id = @ProviderId
+                    );                
+                    
+                    INSERT INTO provider_city (city_name, provider_id, region_id, domain_code, city_code, source_city_id, city_type)
+                    SELECT DISTINCT
+                         src.city_name AS name
+                        ,@ProviderId
+                        ,r.id AS region_id
+                        ,src.domain_code
+                        ,src.city_code
+                        ,src.source_city_id
+                        ,src.city_type
+                    FROM cities_temp src
+                    CROSS JOIN LATERAL (
+                        SELECT id FROM provider_region 
+                        WHERE region_name = src.region 
+                        AND provider_id = @ProviderId 
+                        LIMIT 1
+                    ) r
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM provider_city tgt 
+                        WHERE tgt.city_name = src.city_name 
+                        AND tgt.provider_id = @ProviderId 
+                        AND tgt.region_id = r.id
+                        AND (src.city_type = tgt.city_type OR src.city_type IS NULL)
+                    );
+                    
+                    INSERT INTO provider_tag (name, provider_id)
+                    SELECT DISTINCT
+                        tag
+                        ,@ProviderId
+                    FROM tags_temp
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM provider_tag tgt 
+                        WHERE tgt.name = tag 
+                        AND tgt.provider_id = @ProviderId
+                    );
+                    
+                    CREATE TEMP TABLE city_to_tag_temp AS
+                    SELECT DISTINCT
+                        c.id AS city_id,
+                        rt.id AS tag_id
+                    FROM tags_temp t
+                    CROSS JOIN LATERAL (
+                        SELECT id FROM provider_city c
+                        WHERE c.city_name = t.city_name
+                        AND c.provider_id = @ProviderId
+                        AND EXISTS (
+                            SELECT 1 FROM provider_region r 
+                            WHERE r.region_name = t.region 
+                            AND r.id = c.region_id
                         )
-                        GROUP BY pc2.domain_code, pc2.city_code
-                    ) dc ON pc.domain_code = dc.domain_code AND pc.id != dc.min_id
-                    WHERE pc.provider_id = ProviderId
-                );
-                
-                -- Очищаем временную таблицу
-                DROP TABLE IF EXISTS city_to_tag_temp;
-                END $$
-            ";
+                        LIMIT 1
+                    ) c
+                    CROSS JOIN LATERAL (
+                        SELECT id FROM provider_tag 
+                        WHERE name = t.tag 
+                        AND provider_id = @ProviderId
+                        LIMIT 1
+                    ) rt;
+                    
+                    INSERT INTO provider_city_to_tag (provider_id, provider_city_id, provider_tag_id)
+                    SELECT 
+                         @ProviderId
+                        ,city_id
+                        ,tag_id
+                    FROM city_to_tag_temp src
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM provider_city_to_tag tgt 
+                        WHERE tgt.provider_city_id = src.city_id 
+                        AND tgt.provider_tag_id = src.tag_id
+                    );
+                    
+                    -- Обновление DomainCode
+                    UPDATE provider_city
+                    SET domain_code = city_code
+                    WHERE id IN (
+                        SELECT DISTINCT pc.id
+                        FROM provider_city pc
+                        JOIN (
+                            SELECT pc2.domain_code, MIN(pc2.id) AS min_id
+                            FROM provider_city pc2
+                            WHERE pc2.provider_id = @ProviderId
+                            AND pc2.domain_code IN (
+                                SELECT domain_code
+                                FROM provider_city
+                                WHERE provider_id = @ProviderId
+                                GROUP BY domain_code
+                                HAVING COUNT(*) > 1
+                            )
+                            GROUP BY pc2.domain_code, pc2.city_code
+                        ) dc ON pc.domain_code = dc.domain_code AND pc.id != dc.min_id
+                        WHERE pc.provider_id = @ProviderId
+                    );
+                    
+                    -- Очищаем временную таблицу
+                    DROP TABLE IF EXISTS city_to_tag_temp;
+                ";
 
-            await comm.ExecuteNonQueryAsync();
-            await transaction.CommitAsync();
+                comm.Parameters.AddWithValue("@ProviderId", providerId);
+
+                await comm.ExecuteNonQueryAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }

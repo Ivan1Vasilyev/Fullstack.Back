@@ -24,12 +24,13 @@ builder.Services.AddCors(options =>
 #endif
 
 builder.Services.AddControllers();
+
 builder.Services
-    .AddServices()
-    .AddRepositories()
     .AddDatabases()
-    .AddFileLoaders()
-    .AddUtils();
+    .AddUtils()
+    .AddRepositories()
+    .AddServices()
+    .AddFileLoaders();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -51,3 +52,7 @@ app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
 
+enum InternetTehnologyEnum
+{
+    val1, val2, val3, val4
+};
